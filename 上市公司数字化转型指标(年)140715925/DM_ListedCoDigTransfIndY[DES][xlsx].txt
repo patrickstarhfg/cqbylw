@@ -1,0 +1,5 @@
+EndDate [统计年度] - null
+Symbol [证券代码] - null
+IndicatorClass [指标分类] - 人工智能技术、云计算技术、区块链技术、大数据技术、数字技术应用
+IndicatorName [指标名称] - 以上技术的细分指标名称，详见说明书附录。
+WordFrequency [词频] - 在报告中出现的次数。

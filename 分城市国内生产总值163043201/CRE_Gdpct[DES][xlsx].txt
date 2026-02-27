@@ -1,0 +1,15 @@
+Sgnyea [年度标识] - 
+Ctnm [城市名称] - 
+Ctnm_id [城市代码] - 
+Cttyp [城市类别] - 
+Prvcnm_id [省份标识] - 
+Prvcnm [省份名称] - 
+Gdpct01 [国内生产总值] - 
+Gdpct02 [第一产业占GDP比重(%)] - 第一产业是指农业，包括种植业、林业、牧业和渔业。
+Gdpct03 [第二产业占GDP比重(%)] - 第二产业指工业和建筑业。
+Gdpct04 [第三产业占GDP比重(%)] - 第三产业除第一、第二产业以外的其他各业。
+GDP_PerCapita [人均地区生产总值] - 
+GDPYoY [地区生产总值同比] - 
+GDP_PrimInd [第一产业生产总值] - 
+GDP_SecInd [第二产业生产总值] - 
+GDP_TerInd [第三产业生产总值] - 

@@ -1,0 +1,7 @@
+DeclareDate [发布时间] - null
+PolicyTitle [政策标题] - null
+PolicyContent [政策内容] - null
+DispatchAgency [发文机构] - null
+InfoSource [信息来源] - null
+SourceRegion [来源地区] - null
+Website [网址] - null
