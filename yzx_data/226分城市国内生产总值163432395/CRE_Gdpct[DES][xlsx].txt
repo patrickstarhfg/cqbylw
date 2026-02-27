@@ -1,0 +1,5 @@
+Sgnyea [年度标识] - 
+Ctnm [城市名称] - 
+Ctnm_id [城市代码] - 
+Prvcnm [省份名称] - 
+Gdpct01 [国内生产总值] - 

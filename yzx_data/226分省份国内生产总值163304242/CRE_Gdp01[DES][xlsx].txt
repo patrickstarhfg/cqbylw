@@ -1,0 +1,4 @@
+Sgnyea [年度标识] - 
+Prvcnm_id [省份编码] - 
+Prvcnm [省份名称] - 
+Gdp0101 [地区生产总值] - 
