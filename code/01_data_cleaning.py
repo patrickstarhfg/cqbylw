@@ -206,11 +206,20 @@ if info_file:
     base_info['EstablishYear'] = base_info['EstablishDate'].dt.year
     base_info['Age'] = base_info['Year'] - base_info['EstablishYear']
     base_info['Age'] = base_info['Age'].apply(lambda x: x if x >= 0 else np.nan)
-    base_info['Age'] = np.log(base_info['Age'] + 1)
+    # 使用 np.log1p 处理 float 类型，避免 float.log 错误
+    base_info['Age'] = np.log1p(base_info['Age'])
     
     base_info['Stkcd'] = base_info['Stkcd'].apply(standardize_stkcd)
     base_info = base_info.sort_values(['Stkcd', 'Year']).drop_duplicates(['Stkcd', 'Year'], keep='last')
-    base_info = base_info[['Stkcd', 'Year', 'Age', 'IndustryCode']]
+    
+    # 检查 IndustryCode 是否存在，如果不存在则不包含在列列表中
+    cols_to_keep = ['Stkcd', 'Year', 'Age']
+    if 'IndustryCode' in base_info.columns:
+        cols_to_keep.append('IndustryCode')
+    else:
+        print("Warning: 'IndustryCode' not found in base_info. Trying to merge from old file later if possible.")
+        
+    base_info = base_info[cols_to_keep]
 else:
     base_info = pd.DataFrame()
 
@@ -277,15 +286,58 @@ for i, df in enumerate(dfs_to_merge):
         print(f"Merging dataframe {i+1}...")
         df_final = pd.merge(df_final, df, on=['Stkcd', 'Year'], how='left')
 
-# 补回旧的 Province/City 以便合并 GDP (如果 base_info 里没有)
-# ... 这里简化处理，先假设 GDP 需要 Province/City，暂时跳过 GDP 合并逻辑，或者沿用旧逻辑
-# 考虑到新数据中没有 Province/City，我们暂时保留 df_final 中的 GDP 相关列为空，或者尝试从旧数据中提取
+# 优先使用城市 GDP，如果缺失则使用省份 GDP
+if 'GDP_City' in df_final.columns and 'GDP_Prov' in df_final.columns:
+    df_final['GDP'] = df_final['GDP_City'].fillna(df_final['GDP_Prov'])
+else:
+    # 尝试从旧逻辑中恢复 GDP 列，或者如果都缺失则设为 NaN
+    print("Warning: GDP_City or GDP_Prov not found in merged data.")
+    if 'GDP_City' in df_final.columns:
+        df_final['GDP'] = df_final['GDP_City']
+    elif 'GDP_Prov' in df_final.columns:
+        df_final['GDP'] = df_final['GDP_Prov']
+    else:
+        df_final['GDP'] = np.nan
 
 # 4. 变量计算与清洗
 print("Calculating variables...")
-# Size: ln(TotalAssets)
-if 'TotalAssets' in df_final.columns:
-    df_final['Size'] = np.log(df_final['TotalAssets'])
+# (0) GDP: ln(GDP)
+# 注意单位：通常 GDP 是亿元，取对数前确认是否有 0 或负数
+# 如果 GDP 缺失严重，可能是因为 City/Province 名称不匹配（比如多了“市”字或者空格）
+df_final['GDP'] = np.log1p(df_final['GDP'])
+
+
+# (1) Size: ln(TotalAssets)
+# 确保 TotalAssets 是浮点数类型
+df_final['TotalAssets'] = pd.to_numeric(df_final['TotalAssets'], errors='coerce')
+df_final['Size'] = np.log1p(df_final['TotalAssets'])
+
+# (2) Lev: TotalLiabilities / TotalAssets
+# 检查列是否存在
+if 'TotalLiabilities' in df_final.columns and 'TotalAssets' in df_final.columns:
+    df_final['TotalLiabilities'] = pd.to_numeric(df_final['TotalLiabilities'], errors='coerce')
+    df_final['Lev'] = df_final['TotalLiabilities'] / df_final['TotalAssets']
+else:
+    print("Warning: TotalLiabilities or TotalAssets not found. Lev will be NaN.")
+    df_final['Lev'] = np.nan
+
+# (3) ROA: NetProfit / TotalAssets
+# 如果 ROA 缺失，可能是 NetProfit 缺失或者 TotalAssets 缺失
+if 'NetProfit' in df_final.columns and 'TotalAssets' in df_final.columns:
+    df_final['NetProfit'] = pd.to_numeric(df_final['NetProfit'], errors='coerce')
+    df_final['ROA'] = df_final['NetProfit'] / df_final['TotalAssets']
+else:
+    # 尝试使用直接的 ROA 列
+    if 'ROA' not in df_final.columns:
+        print("Warning: NetProfit or TotalAssets not found, and ROA column missing. ROA will be NaN.")
+        df_final['ROA'] = np.nan
+
+# (4) Board: ln(Board)
+if 'Board' in df_final.columns:
+    df_final['Board'] = pd.to_numeric(df_final['Board'], errors='coerce')
+    df_final['Board'] = np.log1p(df_final['Board'])
+else:
+    print("Warning: Board column not found.")
 
 # 5. 保存结果
 print(f"Saving final dataset to {output_path}...")
